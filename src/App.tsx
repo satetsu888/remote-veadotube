@@ -30,6 +30,7 @@ function App() {
     loadHostPort()
   }, [])
 
+  const isSSL = window.location.protocol === 'https:'
 
   return connectionStarted ? (
     <RemoteController
@@ -56,34 +57,57 @@ function App() {
           .
         </p>
       </div>
-      <div style={{ fontSize: "large", display: "grid", margin: "0 12px" }}>
-        Host
-        <input
-          type="text"
-          name="host"
-          style={{ fontSize: "x-large", borderRadius: "8px" }}
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-        />
-        Port
-        <input
-          type="text"
-          name="port"
-          style={{ fontSize: "x-large", borderRadius: "8px" }}
-          value={port}
-          onChange={(e) => setPort(e.target.value)}
-        />
-        <div style={{ marginBottom: "12px" }} />
-        <button
-          type="button"
-          onClick={() => {
-            storeHostPort();
-            setConnectionStarted(true);
+      {isSSL ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            backgroundColor: "rgba(255, 0, 0, 0.1)",
+            color: "red",
+            fontSize: "large",
           }}
         >
-          Connect
-        </button>
-      </div>
+          <p style={{ margin: "4px 24px" }}>
+            This page cannot be used with SSL to connect via websocket of
+            veadotube. Please use{" "}
+            <a href={window.location.href.replace("https://", "http://")}>
+              the http page
+            </a>{" "}
+            instead.
+          </p>
+        </div>
+      ) : null}
+      {!isSSL && (
+        <div style={{ fontSize: "large", display: "grid", margin: "0 24px" }}>
+          Host
+          <input
+            type="text"
+            name="host"
+            style={{ fontSize: "x-large", borderRadius: "8px" }}
+            value={host}
+            onChange={(e) => setHost(e.target.value)}
+          />
+          <div style={{ marginBottom: "12px" }} />
+          Port
+          <input
+            type="text"
+            name="port"
+            style={{ fontSize: "x-large", borderRadius: "8px" }}
+            value={port}
+            onChange={(e) => setPort(e.target.value)}
+          />
+          <div style={{ marginBottom: "24px" }} />
+          <button
+            type="button"
+            onClick={() => {
+              storeHostPort();
+              setConnectionStarted(true);
+            }}
+          >
+            Connect
+          </button>
+        </div>
+      )}
       <div style={{ marginBottom: "48px" }} />
       <footer
         style={{ display: "flex", flexDirection: "column", color: "#8797a6" }}
@@ -105,10 +129,10 @@ function App() {
         </div>
         <div style={{ display: "flex", justifyContent: "center" }}>
           <p>
-          Provided by{" "}
-          <a href="https://x.com/satetsu888/" target="_blank">
-            satetsu888
-          </a>
+            Provided by{" "}
+            <a href="https://x.com/satetsu888/" target="_blank">
+              satetsu888
+            </a>
           </p>
         </div>
       </footer>
