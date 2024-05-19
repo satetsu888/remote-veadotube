@@ -1,117 +1,70 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
-
-type StateImage = {
-  width: number
-  height: number
-  data: string
-}
-
-type State = {
-  id: string
-  name: string
-  image: StateImage | null
-}
+import { RemoteController } from './components/RemoteController'
 
 function App() {
-  const [states, setStates] = useState<State[]>([])
-  const [currentStateId, setCurrentStateId] = useState<string | null>(null)
-  const socketRef = useRef<WebSocket>()
+  const [host, setHost] = useState<string>('192.168.')
+  const [port, setPort] = useState<string>('')
 
-  const INITIAL_LIST_EVENT_PAYLOAD = 'nodes: {"event": "list"}'
-  const STATE_EVENTS_PAYLOAD = (input: string) => {
-    return `nodes: {
-      "event": "payload",
-      "type": "stateEvents",
-      "id": "mini",
-      "payload": ${input}
-    }`;
-  };
+  const [connectionStarted, setConnectionStarted] = useState<boolean>(false)
 
-    const onMessage = (event: MessageEvent<string>) => {
-      const str = event.data.replace(/.*nodes:/, '').replaceAll('\u0000', '')
-      const json = JSON.parse(str)
-
-      if (json.event === 'payload') {
-        const payload = json.payload
-
-        switch (payload.event) {
-          case 'list':
-            setStates(payload.states)
-            for (const state of payload.states) {
-              socketRef.current?.send(
-                STATE_EVENTS_PAYLOAD(`{"event": "thumb", "state": "${state.id}"}`)
-              );
-            }
-            break
-          case 'thumb':
-            setStates((prev) => {
-              const newState = prev.map((state) => {
-                if (state.id === payload.state) {
-                  return { ...state, image: {
-                    width: payload.width,
-                    height: payload.height,
-                    data: payload.png,
-                  } }
-                }
-                return state
-              })
-              return newState
-            })
-            break
-        }
-
+  const storeHostPort = () => {
+    localStorage.setItem('storedHostPort', JSON.stringify({ host, port }))
+  }
+  const loadHostPort = () => {
+    const storedHostPort = localStorage.getItem('storedHostPort')
+    if (storedHostPort) {
+      try {
+        const { host, port } = JSON.parse(storedHostPort);
+        setHost(host);
+        setPort(port);
+      } catch (e) {
+        localStorage.removeItem('storedHostPort');
+        console.error("Failed to parse stored host/port", e);
       }
-      console.log('json', json)
     }
+  }
 
   useEffect(() => {
-    const websocket = new WebSocket('ws://127.0.0.1:49860?n=name')
-    socketRef.current = websocket
-
-    websocket.addEventListener('open', () => {
-      console.log('open')
-      websocket.send(INITIAL_LIST_EVENT_PAYLOAD)
-      websocket.send(STATE_EVENTS_PAYLOAD('{"event": "list"}'))
-    })
-
-    websocket.addEventListener('close', () => {
-      console.log('close')
-    })
-
-    websocket.addEventListener('error', (event) => {
-      console.error('error', event)
-    })
-
-    websocket.addEventListener('message', onMessage)
-
-    return () => {
-      websocket.close()
-      websocket.removeEventListener('message', onMessage)
-      websocket.removeEventListener('open', () => {})
-      websocket.removeEventListener('close', () => {})
-      websocket.removeEventListener('error', () => {})
-    }
+    loadHostPort()
   }, [])
 
-  return (
+
+  return connectionStarted ? (
+    <RemoteController
+      host={host}
+      port={port}
+      setConnectionStarted={setConnectionStarted}
+    />
+  ) : (
     <>
-      <div style={{display: "flex", margin: "0 4px 0 4px", gap: "4px", flexWrap: "wrap", justifyContent: "center"}}>
-        {states.map((state) => (
-          <button
-            type="button"
-            style={state.id === currentStateId ? { backgroundColor: 'lightblue' } : {}}
-            key={state.id}
-            onClick={() => {
-              socketRef.current?.send(
-                STATE_EVENTS_PAYLOAD(`{"event": "set", "state": "${state.id}"}`)
-              );
-              setCurrentStateId(state.id)
-            }}
-          >
-            {state.image ? <img src={`data:image/png;base64,${state.image.data}`} alt={state.name} width={state.image.width} height={state.image.height} /> : state.name}
-          </button>
-        ))}
+      <div style={{ fontSize: "large", display: "grid", margin: "0 12px" }}>
+        Host
+        <input
+          type="text"
+          name="host"
+          style={{ fontSize: "x-large" }}
+          value={host}
+          onChange={(e) => setHost(e.target.value)}
+        />
+        Port
+        <input
+          type="text"
+          name="port"
+          style={{ fontSize: "x-large" }}
+          value={port}
+          onChange={(e) => setPort(e.target.value)}
+        />
+        <div style={{marginBottom: "12px"}} />
+        <button
+          type="button"
+          onClick={() => {
+            storeHostPort();
+            setConnectionStarted(true);
+          }}
+        >
+          Connect
+        </button>
       </div>
     </>
   );
