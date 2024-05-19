@@ -69,11 +69,7 @@ function App() {
         >
           <p style={{ margin: "4px 24px" }}>
             This page cannot be used with SSL to connect via websocket of
-            veadotube. Please use{" "}
-            <a href={window.location.href.replace("https://", "http://")}>
-              the http page
-            </a>{" "}
-            instead.
+            veadotube. Please use the http page instead.
           </p>
         </div>
       ) : null}
