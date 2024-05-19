@@ -77,7 +77,9 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
       console.error('error', event)
 
       if (event.type === 'error') {
-        // setConnectionStarted(false)
+        if (import.meta.env.PROD){
+          setConnectionStarted(false)
+        }
       }
     })
 
