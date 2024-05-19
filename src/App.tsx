@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import logo from '/logo.png'
 import { RemoteController } from './components/RemoteController'
 
 function App() {
@@ -38,6 +39,10 @@ function App() {
     />
   ) : (
     <>
+      <div style={{ display: "flex", alignItems: "center", flexDirection: "column" }}>
+        <img src={logo} alt="logo" style={{ width: "50%", height: "auto" }} />
+        <h1>Remote veadotube</h1>
+      </div>
       <div style={{ fontSize: "large", display: "grid", margin: "0 12px" }}>
         Host
         <input
@@ -55,7 +60,7 @@ function App() {
           value={port}
           onChange={(e) => setPort(e.target.value)}
         />
-        <div style={{marginBottom: "12px"}} />
+        <div style={{ marginBottom: "12px" }} />
         <button
           type="button"
           onClick={() => {
