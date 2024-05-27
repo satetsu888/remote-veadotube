@@ -11,6 +11,7 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
   const [states, setStates] = useState<State[]>([])
   const [currentStateId, setCurrentStateId] = useState<string | null>(null)
   const socketRef = useRef<WebSocket>()
+  const messageReceived = useRef(false)
 
   const INITIAL_LIST_EVENT_PAYLOAD = 'nodes: {"event": "list"}'
   const STATE_EVENTS_PAYLOAD = (input: string) => {
@@ -23,6 +24,8 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
   };
 
   const onMessage = useCallback((event: MessageEvent<string>) => {
+    messageReceived.current = true
+
     const str = event.data.replace(/.*nodes:/, '').replaceAll('\u0000', '')
     const json = JSON.parse(str)
 
@@ -85,18 +88,28 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
 
     websocket.addEventListener('message', onMessage)
 
+    const timeout = setTimeout(() => {
+      if (!messageReceived.current) {
+        websocket.close()
+        setConnectionStarted(false)
+        alert('Connection timed out. No response from server.')
+      }
+    }, 3000)
+
     return () => {
       websocket.close()
       websocket.removeEventListener('message', onMessage)
       websocket.removeEventListener('open', () => {})
       websocket.removeEventListener('close', () => {})
       websocket.removeEventListener('error', () => {})
+      clearTimeout(timeout)
     }
   }, [onMessage, host, port, setConnectionStarted])
 
   return (
     <>
       <div style={{display: "flex", margin: "0 4px 0 4px", gap: "4px", flexWrap: "wrap", justifyContent: "center"}}>
+        { messageReceived.current ? null : <p>Connecting...</p>}
         {states.map((state) => (
           <button
             type="button"
