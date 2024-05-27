@@ -109,7 +109,7 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
   return (
     <>
       <div style={{display: "flex", margin: "0 4px 0 4px", gap: "4px", flexWrap: "wrap", justifyContent: "center"}}>
-        { messageReceived.current ? null : <p>Connecting...</p>}
+        { messageReceived.current ? null : <p>Connecting to {host}:{port} ...</p>}
         {states.map((state) => (
           <button
             type="button"
