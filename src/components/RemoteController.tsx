@@ -63,46 +63,57 @@ export const RemoteController = ({host, port, setConnectionStarted}: Props) => {
   },[])
 
   useEffect(() => {
-    const websocket = new WebSocket(`ws://${host}:${port}?n=remote-veadotube`)
-    socketRef.current = websocket
+    try {
+      const websocket = new WebSocket(
+        `ws://${host}:${port}?n=remote-veadotube`
+      );
+      socketRef.current = websocket;
 
-    websocket.addEventListener('open', () => {
-      console.log('open')
-      websocket.send(INITIAL_LIST_EVENT_PAYLOAD)
-      websocket.send(STATE_EVENTS_PAYLOAD('{"event": "list"}'))
-    })
+      websocket.addEventListener("open", () => {
+        console.log("open");
+        websocket.send(INITIAL_LIST_EVENT_PAYLOAD);
+        websocket.send(STATE_EVENTS_PAYLOAD('{"event": "list"}'));
+      });
 
-    websocket.addEventListener('close', () => {
-      console.log('close')
-    })
+      websocket.addEventListener("close", () => {
+        console.log("close");
+      });
 
-    websocket.addEventListener('error', (event) => {
-      console.error('error', event)
+      websocket.addEventListener("error", (event) => {
+        console.error("error", event);
 
-      if (event.type === 'error') {
-        if (import.meta.env.PROD){
-          setConnectionStarted(false)
+        if (event instanceof Error) {
+          if (import.meta.env.PROD) {
+            setConnectionStarted(false);
+            alert(event.message);
+          }
         }
-      }
-    })
+      });
 
-    websocket.addEventListener('message', onMessage)
+      websocket.addEventListener("message", onMessage);
 
-    const timeout = setTimeout(() => {
-      if (!messageReceived.current) {
-        websocket.close()
-        setConnectionStarted(false)
-        alert('Connection timed out. No response from server.')
-      }
-    }, 3000)
+      const timeout = setTimeout(() => {
+        if (!messageReceived.current) {
+          websocket.close();
+          setConnectionStarted(false);
+          alert("Connection timed out. No response from server.");
+        }
+      }, 3000);
 
-    return () => {
-      websocket.close()
-      websocket.removeEventListener('message', onMessage)
-      websocket.removeEventListener('open', () => {})
-      websocket.removeEventListener('close', () => {})
-      websocket.removeEventListener('error', () => {})
-      clearTimeout(timeout)
+      return () => {
+        websocket.close();
+        websocket.removeEventListener("message", onMessage);
+        websocket.removeEventListener("open", () => {});
+        websocket.removeEventListener("close", () => {});
+        websocket.removeEventListener("error", () => {});
+        clearTimeout(timeout);
+      };
+    } catch (error) {
+        console.error("error", error);
+        if (error instanceof Error) {
+          setConnectionStarted(false);
+          alert(error.message);
+        }
     }
   }, [onMessage, host, port, setConnectionStarted])
 
