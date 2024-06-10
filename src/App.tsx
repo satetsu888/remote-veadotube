@@ -20,7 +20,6 @@ function App() {
     <RemoteController
       host={host}
       port={port}
-      setConnectionStarted={setConnectionStarted}
     />
   ) : (
     <Top

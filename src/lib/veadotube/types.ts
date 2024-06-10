@@ -1,9 +1,37 @@
+export type WebsocketConnectingErrorType = "WebsocketConnectingError"
+export type WebsocketErrorType = "WebsocketError"
+export type WebsocketTimeoutErrorType = "WebsocketTimeoutError"
+
+export type VeadotubeClientError = {
+  type: WebsocketConnectingErrorType | WebsocketErrorType | WebsocketTimeoutErrorType
+  message: string
+  additionalInfo: string
+}
+
+export const WebsocketConnectingError: VeadotubeClientError = {
+  type: "WebsocketConnectingError",
+  message: "Failed to open websocket connection.",
+  additionalInfo: "Make sure the port number is correct."
+}
+
+export const WebsocketError: VeadotubeClientError = {
+  type: "WebsocketError",
+  message: "Websocket error.",
+  additionalInfo: "Make sure the host address and port number are correct. And the websocket server is running."
+}
+
+export const WebsocketTimeoutError: VeadotubeClientError = {
+  type: "WebsocketTimeoutError",
+  message: "Websocket connection timeout.",
+  additionalInfo: "Make sure the host address is correct. And the websocket server is running."
+} 
+
 export type ServerConfig = {
   host: string
   port: string
   clientName: string
-  onCloseCallback?: (e: Event) => void
-  onErrorCallback?: (e: Event) => void
+  onCloseCallback?: (e: CloseEvent) => void
+  onErrorCallback?: (e: VeadotubeClientError) => void
 }
 
 export type StateImage = {
