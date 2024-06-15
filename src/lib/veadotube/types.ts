@@ -1,4 +1,7 @@
-export type Event = 'websocketStatusChanged' | 'statesChanged' | 'stateChanged';
+export type Event = typeof WebsocketStatusChangedEvent | typeof VeadotubeStatesChangedEvent | typeof VeadotubeCurrentStateChangedEvent;
+export const WebsocketStatusChangedEvent = 'websocketStatusChanged';
+export const VeadotubeStatesChangedEvent = 'statesChanged';
+export const VeadotubeCurrentStateChangedEvent = 'currentStateChanged';
 export type EventListener = () => void;
 
 export type WebsocketConnectingErrorType = "WebsocketConnectingError"

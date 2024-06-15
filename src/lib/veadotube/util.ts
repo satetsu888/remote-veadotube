@@ -8,6 +8,7 @@ export const parseReceivedPayload = (event: MessageEvent<string>): StateEventRes
     const json = JSON.parse(str);
 
     if (json.event !== "payload") {
+        // TODO: event handling for other messages
         return
     }
 

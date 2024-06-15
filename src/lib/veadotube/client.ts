@@ -4,9 +4,12 @@ import {
   EventListener,
   ServerConfig,
   State,
+  WebsocketStatusChangedEvent,
   WebsocketConnectingError,
   WebsocketError,
   WebsocketTimeoutError,
+  VeadotubeStatesChangedEvent,
+  VeadotubeCurrentStateChangedEvent,
 } from "./types";
 import { parseReceivedPayload } from "./util";
 
@@ -14,21 +17,23 @@ export class VeadotubeClient {
   private config: ServerConfig;
   public websocket: WebSocket | null;
   private veadotubeStates: State[];
+  private veadotubeListenToken: string;
   private currentStateId: string | null;
   private timeoutTimerId: number | null;
 
-  private subscribers: {
+  private eventSubscribers: {
     [key in Event]: Set<EventListener>;
   } = {
     websocketStatusChanged: new Set(),
     statesChanged: new Set(),
-    stateChanged: new Set(),
+    currentStateChanged: new Set(),
   };
 
   constructor(config: ServerConfig) {
     this.config = config;
 
     this.websocket = null;
+    this.veadotubeListenToken = Math.random().toString(36).substring(2);
     this.veadotubeStates = [];
     this.currentStateId = null;
 
@@ -36,29 +41,30 @@ export class VeadotubeClient {
   }
 
   addEventListener = (type: Event, listener: EventListener) => {
-    this.subscribers[type].add(listener);
+    this.eventSubscribers[type].add(listener);
   };
 
   removeEventListener = (type: Event, listener: EventListener) => {
-    this.subscribers[type].delete(listener);
+    this.eventSubscribers[type].delete(listener);
   };
 
   dispatchEvent(event: Event): void {
-    for (const listener of this.subscribers[event]) {
+    for (const listener of this.eventSubscribers[event]) {
       listener();
     }
   }
 
   reset = () => {
     this.stopTimeoutTimer();
+    this.unlisten();
 
     this.websocket = null;
     this.veadotubeStates = [];
     this.currentStateId = null;
 
-    this.dispatchEvent("websocketStatusChanged");
-    this.dispatchEvent("statesChanged");
-    this.dispatchEvent("stateChanged");
+    this.dispatchEvent(WebsocketStatusChangedEvent);
+    this.dispatchEvent(VeadotubeStatesChangedEvent);
+    this.dispatchEvent(VeadotubeCurrentStateChangedEvent);
   };
 
   startTimeoutTimer = () => {
@@ -96,10 +102,11 @@ export class VeadotubeClient {
         for (const state of this.veadotubeStates) {
           this.callStateThumb(state.id);
         }
-        this.dispatchEvent("statesChanged");
+        this.dispatchEvent(VeadotubeStatesChangedEvent);
         break;
       case "peek":
-        // NOTE: do something with peek event ?
+        this.currentStateId = payloadEventResult.state;
+        this.dispatchEvent(VeadotubeCurrentStateChangedEvent);
         break;
       case "thumb":
         this.veadotubeStates = this.veadotubeStates.map((state) => {
@@ -115,7 +122,7 @@ export class VeadotubeClient {
           }
           return state;
         });
-        this.dispatchEvent("statesChanged");
+        this.dispatchEvent(VeadotubeStatesChangedEvent);
         break;
     }
   };
@@ -151,8 +158,9 @@ export class VeadotubeClient {
       this.stopTimeoutTimer();
       if (initializeWithListStates) {
         this.listStates();
+        this.listen();
       }
-      this.dispatchEvent("websocketStatusChanged");
+      this.dispatchEvent(WebsocketStatusChangedEvent);
     });
 
     ws.addEventListener("close", (e) => {
@@ -161,7 +169,7 @@ export class VeadotubeClient {
       }
 
       this.reset();
-      this.dispatchEvent("websocketStatusChanged");
+      this.dispatchEvent(WebsocketStatusChangedEvent);
     });
 
     ws.addEventListener("error", (e) => {
@@ -175,7 +183,7 @@ export class VeadotubeClient {
     });
 
     this.websocket = ws;
-    this.dispatchEvent("websocketStatusChanged");
+    this.dispatchEvent(WebsocketStatusChangedEvent);
   };
 
   close = () => {
@@ -187,14 +195,20 @@ export class VeadotubeClient {
     this.websocket?.send(message);
   };
 
-  setState = (stateId: string) => {
-    this.currentStateId = stateId;
-    this.dispatchEvent("stateChanged");
-    this.sendRaw(messages.SET_STATE(stateId));
-  };
-
   listStates = () => {
     this.sendRaw(messages.LIST_STATES());
+  };
+
+  listen = () => {
+    this.sendRaw(messages.LISTEN(this.veadotubeListenToken));
+  };
+
+  unlisten = () => {
+    this.sendRaw(messages.UNLISTEN(this.veadotubeListenToken));
+  };
+
+  setState = (stateId: string) => {
+    this.sendRaw(messages.SET_STATE(stateId));
   };
 
   callStateThumb = (stateId: string) => {

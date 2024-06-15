@@ -1,6 +1,11 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { VeadotubeClient } from "../lib/veadotube/client";
-import { VeadotubeClientError } from "../lib/veadotube/types";
+import {
+  VeadotubeClientError,
+  VeadotubeCurrentStateChangedEvent,
+  VeadotubeStatesChangedEvent,
+  WebsocketStatusChangedEvent,
+} from "../lib/veadotube/types";
 
 export const useVeadotube = (
   host: string,
@@ -52,13 +57,13 @@ export const useVeadotube = (
 
   const states = useSyncExternalStore(
     (onStoreChange: () => void) => {
-      veadotubeClientRef.current.addEventListener("statesChanged", () => {
+      veadotubeClientRef.current.addEventListener(VeadotubeStatesChangedEvent, () => {
         onStoreChange();
       });
 
       return () => {
         veadotubeClientRef.current.removeEventListener(
-          "statesChanged",
+          VeadotubeStatesChangedEvent,
           onStoreChange
         );
       };
@@ -68,13 +73,13 @@ export const useVeadotube = (
 
   const currentStateId = useSyncExternalStore(
     (onStoreChange: () => void) => {
-      veadotubeClientRef.current.addEventListener("stateChanged", () => {
+      veadotubeClientRef.current.addEventListener(VeadotubeCurrentStateChangedEvent, () => {
         onStoreChange();
       });
 
       return () => {
         veadotubeClientRef.current.removeEventListener(
-          "stateChanged",
+          VeadotubeCurrentStateChangedEvent,
           onStoreChange
         );
       };
@@ -86,13 +91,13 @@ export const useVeadotube = (
 
   const websocketState = useSyncExternalStore(
     (onStoreChange: () => void) => {
-      veadotubeClientRef.current.addEventListener("websocketStatusChanged", () => {
+      veadotubeClientRef.current.addEventListener(WebsocketStatusChangedEvent, () => {
         onStoreChange();
       });
 
       return () => {
         veadotubeClientRef.current.removeEventListener(
-          "websocketStatusChanged",
+          WebsocketStatusChangedEvent,
           onStoreChange
         );
       };
