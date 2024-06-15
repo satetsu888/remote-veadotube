@@ -1,3 +1,6 @@
+export type Event = 'websocketStatusChanged' | 'statesChanged' | 'stateChanged';
+export type EventListener = () => void;
+
 export type WebsocketConnectingErrorType = "WebsocketConnectingError"
 export type WebsocketErrorType = "WebsocketError"
 export type WebsocketTimeoutErrorType = "WebsocketTimeoutError"
